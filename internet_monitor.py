@@ -109,9 +109,10 @@ class InternetMonitor:
     def ping_test(self, target):
         """Test connectivity using ping"""
         try:
+            # Use stricter ping settings: no DNS resolution, shorter timeout, fail fast
             result = subprocess.run(
-                ['ping', '-c', '1', '-W', '5', target],
-                capture_output=True, text=True, timeout=10
+                ['ping', '-c', '1', '-W', '3', '-n', target],
+                capture_output=True, text=True, timeout=8
             )
 
             if result.returncode == 0:
@@ -121,6 +122,11 @@ class InternetMonitor:
                     ping_time = float(output.split('time=')[1].split()[0])
                     return True, ping_time
                 return True, 0
+            else:
+                self.logger.debug(f"Ping to {target} failed with return code {result.returncode}")
+                return False, None
+        except subprocess.TimeoutExpired:
+            self.logger.debug(f"Ping to {target} timed out")
             return False, None
         except Exception as e:
             self.logger.debug(f"Ping to {target} failed: {e}")
@@ -130,11 +136,17 @@ class InternetMonitor:
         """Test connectivity using HTTP request"""
         try:
             start_time = time.time()
-            response = requests.get(url, timeout=10)
+            # Shorter timeout and disable retries for faster failure detection
+            response = requests.get(url, timeout=5, allow_redirects=False)
             response_time = (time.time() - start_time) * 1000
 
-            if response.status_code == 200:
+            if response.status_code in [200, 301, 302, 303, 307, 308]:
                 return True, response_time
+            else:
+                self.logger.debug(f"HTTP test to {url} returned status {response.status_code}")
+                return False, None
+        except requests.exceptions.RequestException as e:
+            self.logger.debug(f"HTTP test to {url} failed: {e}")
             return False, None
         except Exception as e:
             self.logger.debug(f"HTTP test to {url} failed: {e}")
@@ -143,7 +155,8 @@ class InternetMonitor:
     def test_connectivity(self):
         """Comprehensive connectivity test"""
         results = []
-        connected = False
+        successful_tests = 0
+        total_tests = 0
 
         # Test ping connectivity
         for target in self.ping_targets:
@@ -155,8 +168,9 @@ class InternetMonitor:
                 'response_time_ms': response_time,
                 'method': 'ping'
             })
+            total_tests += 1
             if success:
-                connected = True
+                successful_tests += 1
 
         # Test HTTP connectivity
         for target in self.http_targets:
@@ -168,8 +182,15 @@ class InternetMonitor:
                 'response_time_ms': response_time,
                 'method': 'http'
             })
+            total_tests += 1
             if success:
-                connected = True
+                successful_tests += 1
+
+        # Consider connected if more than 50% of tests pass
+        connected = successful_tests > (total_tests * 0.5)
+        
+        # Debug logging for connectivity status
+        self.logger.debug(f"Connectivity test: {successful_tests}/{total_tests} tests passed, overall status: {'connected' if connected else 'disconnected'}")
 
         # Log results
         with open(self.connectivity_log, 'a', newline='') as f:

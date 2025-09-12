@@ -1,0 +1,39 @@
+# VPS-only Dockerfile for Internet Monitor Dashboard
+# Only runs the Node.js web server to display uploaded logs
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy application files
+COPY server.js ./
+COPY public/ ./public/
+
+# Create logs directory for uploaded files
+RUN mkdir -p /app/internet_logs
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S -u 1001 nodejs && \
+    chown -R nodejs:nodejs /app
+
+USER nodejs
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Start the web server
+CMD ["npm", "start"]

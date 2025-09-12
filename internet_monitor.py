@@ -405,16 +405,16 @@ class InternetMonitor:
             ssh_cmd = ['ssh', '-i', str(key_file), f'{username}@{hostname}', f'mkdir -p {remote_dir}']
             subprocess.run(ssh_cmd, check=True, capture_output=True)
 
-            # Upload CSV files using SCP
-            csv_files = ['connectivity.csv', 'speedtest.csv', 'events.csv']
-            for csv_file in csv_files:
-                local_path = self.log_dir / csv_file
+            # Upload CSV files and metadata using SCP
+            log_files = ['connectivity.csv', 'speedtest.csv', 'events.csv', 'metadata.json']
+            for log_file in log_files:
+                local_path = self.log_dir / log_file
                 if local_path.exists():
                     scp_cmd = ['scp', '-i', str(key_file), str(local_path), f'{username}@{hostname}:{remote_dir}/']
                     subprocess.run(scp_cmd, check=True, capture_output=True)
-                    self.logger.debug(f"Uploaded {csv_file}")
+                    self.logger.debug(f"Uploaded {log_file}")
                 else:
-                    self.logger.debug(f"{csv_file} not found locally")
+                    self.logger.debug(f"{log_file} not found locally")
 
             # Upload latest report if exists
             report_files = list(self.log_dir.glob('report_*.txt'))

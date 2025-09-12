@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yggdrasil Monitor</title>
+    <title>Heimdall Monitor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * {
@@ -123,7 +123,7 @@
         .loading {
             text-align: center;
             padding: 40px;
-            color: #7f8c8d;
+            color: #a8b0a3;
         }
 
         .last-update {
@@ -134,24 +134,26 @@
         }
 
         .refresh-btn {
-            background: #3498db;
-            color: white;
+            background: #a8b0a3;
+            color: #18181b;
             border: none;
             padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
-            margin-left: 10px;
+            margin-top: 20px;
+            transition: color 0.3s ease, background 0.3s ease;
         }
 
         .refresh-btn:hover {
-            background: #2980b9;
+            background: #18181b;
+            color: #a8b0a3;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Yggdrasil Monitor</h1>
+            <h1>Heimdall Monitor</h1>
             <p id="location">Loading...</p>
             <button class="refresh-btn" onclick="loadData()">Refresh Data</button>
         </div>

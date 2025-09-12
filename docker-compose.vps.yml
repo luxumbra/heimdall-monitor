@@ -1,10 +1,10 @@
 version: '3.8'
 
 services:
-  internet-monitor:
+  internet-monitor-dashboard:
     build: 
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.vps
     ports:
       - "${PORT:-3000}:3000"
     environment:
@@ -12,21 +12,16 @@ services:
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=${PORT:-3000}
       
-      # Monitor Configuration
-      - PING_INTERVAL=${PING_INTERVAL:-30}
-      - SPEEDTEST_INTERVAL=${SPEEDTEST_INTERVAL:-3600}
-      - UPLOAD_INTERVAL=${UPLOAD_INTERVAL:-300}
-      - LOCATION_NAME=${LOCATION_NAME:-Docker Monitor}
+      # Location name for display
+      - LOCATION_NAME=${LOCATION_NAME:-Remote Monitor}
       
       # Timezone (optional)
       - TZ=${TZ:-UTC}
     
     volumes:
-      # Persistent storage for logs and data
+      # Persistent storage for uploaded logs
+      # This is where SCP uploads will land
       - internet_logs_data:/app/internet_logs
-      
-      # Optional: Mount configuration file if needed
-      # - ./monitor_config.ini:/app/monitor_config.ini:ro
     
     restart: unless-stopped
     
@@ -35,17 +30,17 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 10s
     
-    # Resource limits (adjust as needed)
+    # Resource limits (lightweight for dashboard only)
     deploy:
       resources:
         limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
           memory: 256M
-          cpus: '0.25'
+          cpus: '0.3'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
 
 volumes:
   internet_logs_data:

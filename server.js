@@ -299,12 +299,17 @@ app.get('/api/hourly-stats', async (req, res) => {
     }
 });
 
-// Health check endpoint
+// Health check endpoints
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        version: require('./package.json').version
     });
 });
 

@@ -248,17 +248,24 @@ class InternetMonitor:
         try:
             self.logger.info("Running speed test...")
 
-            # Prefer new Ookla speedtest CLI
-            cmd = ['speedtest', '--format=json']
+            # Use human-readable format for accurate speeds, parse the output
+            cmd = ['speedtest', '--accept-license', '--accept-gdpr']
             try:
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
                 if result.returncode == 0:
-                    data = json.loads(result.stdout)
-                    # Ookla JSON structure 
-                    download_mbps = data.get('download', {}).get('bandwidth', 0) / 1_000_000
-                    upload_mbps = data.get('upload', {}).get('bandwidth', 0) / 1_000_000
-                    ping_ms = data.get('ping', {}).get('latency', 0)
-                    server = f"{data.get('server', {}).get('name', 'Unknown')} - {data.get('server', {}).get('location', '')}"
+                    output = result.stdout
+                    
+                    # Parse human-readable output for accurate speeds
+                    import re
+                    download_match = re.search(r'Download:\s+([\d.]+)\s+Mbps', output)
+                    upload_match = re.search(r'Upload:\s+([\d.]+)\s+Mbps', output)
+                    ping_match = re.search(r'Idle Latency:\s+([\d.]+)\s+ms', output)
+                    server_match = re.search(r'Server:\s+(.+?)\s+\(id:', output)
+                    
+                    download_mbps = float(download_match.group(1)) if download_match else 0
+                    upload_mbps = float(upload_match.group(1)) if upload_match else 0
+                    ping_ms = float(ping_match.group(1)) if ping_match else 0
+                    server = server_match.group(1) if server_match else "Unknown Server"
 
                 else:
                     # Fallback to deprecated speedtest-cli

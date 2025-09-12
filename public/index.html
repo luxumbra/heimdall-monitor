@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yggdrasil Monitor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .status-card h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .status-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .status-good { color: #27ae60; }
+        .status-warning { color: #f39c12; }
+        .status-bad { color: #e74c3c; }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .chart-container canvas {
+            height: 300px !important;
+        }
+
+        .events-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .events-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .event-item {
+            padding: 10px;
+            border-left: 4px solid #e74c3c;
+            background: #fdf2f2;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+
+        .event-time {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .event-duration {
+            color: #e74c3c;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .last-update {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+
+        .refresh-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .refresh-btn:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Yggdrasil Monitor</h1>
+            <p id="location">Loading...</p>
+            <button class="refresh-btn" onclick="loadData()">Refresh Data</button>
+        </div>
+
+        <div class="status-grid">
+            <div class="status-card">
+                <h3>Connection Status</h3>
+                <div id="connection-status" class="status-value">-</div>
+                <div id="connection-details">Loading...</div>
+            </div>
+
+            <div class="status-card">
+                <h3>Uptime Today</h3>
+                <div id="uptime-today" class="status-value">-</div>
+                <div>Percentage online</div>
+            </div>
+
+            <div class="status-card">
+                <h3>Disconnects Today</h3>
+                <div id="disconnects-today" class="status-value">-</div>
+                <div>Connection losses</div>
+            </div>
+
+            <div class="status-card">
+                <h3>Average Speed</h3>
+                <div id="avg-speed" class="status-value">-</div>
+                <div>Mbps download</div>
+            </div>
+        </div>
+
+        <div class="chart-grid">
+            <div class="chart-container">
+                <h3>Speed Test Results (Last 24h)</h3>
+                <canvas id="speedChart" width="400" height="200"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Connection Success Rate</h3>
+                <canvas id="connectivityChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <div class="events-container">
+            <h3>Recent Disconnection Events</h3>
+            <div id="events-list" class="events-list">
+                <div class="loading">Loading events...</div>
+            </div>
+        </div>
+
+        <div class="last-update" id="last-update">
+            Last updated: Loading...
+        </div>
+    </div>
+
+    <script>
+        let speedChart, connectivityChart;
+        const API_BASE = ''; // Empty string for same-origin requests
+
+        async function apiRequest(endpoint) {
+            try {
+                const response = await fetch(`${API_BASE}/api${endpoint}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching ${endpoint}:`, error);
+                throw error;
+            }
+        }
+
+        function formatDuration(seconds) {
+            if (seconds < 60) return `${Math.round(seconds)}s`;
+            if (seconds < 3600) return `${Math.floor(seconds/60)}m ${Math.round(seconds%60)}s`;
+            return `${Math.floor(seconds/3600)}h ${Math.floor((seconds%3600)/60)}m`;
+        }
+
+        function updateConnectionStatus(stats) {
+            const statusEl = document.getElementById('connection-status');
+            const detailsEl = document.getElementById('connection-details');
+
+            if (stats.connection_status === 'online') {
+                statusEl.textContent = 'ONLINE';
+                statusEl.className = 'status-value status-good';
+                detailsEl.textContent = 'Connection active';
+            } else {
+                statusEl.textContent = 'OFFLINE';
+                statusEl.className = 'status-value status-bad';
+                detailsEl.textContent = 'Connection lost';
+            }
+        }
+
+        function updateDailyStats(stats) {
+            // Uptime percentage
+            const uptimePercent = stats.uptime_24h.toFixed(1);
+            document.getElementById('uptime-today').textContent = `${uptimePercent}%`;
+            document.getElementById('uptime-today').className =
+                `status-value ${uptimePercent >= 95 ? 'status-good' : uptimePercent >= 90 ? 'status-warning' : 'status-bad'}`;
+
+            // Disconnect count
+            document.getElementById('disconnects-today').textContent = stats.disconnects_24h;
+            document.getElementById('disconnects-today').className =
+                `status-value ${stats.disconnects_24h === 0 ? 'status-good' : stats.disconnects_24h < 5 ? 'status-warning' : 'status-bad'}`;
+
+            // Average speed
+            if (stats.avg_download_speed > 0) {
+                document.getElementById('avg-speed').textContent = stats.avg_download_speed.toFixed(1);
+                document.getElementById('avg-speed').className =
+                    `status-value ${stats.avg_download_speed >= 50 ? 'status-good' : stats.avg_download_speed >= 20 ? 'status-warning' : 'status-bad'}`;
+            } else {
+                document.getElementById('avg-speed').textContent = 'N/A';
+                document.getElementById('avg-speed').className = 'status-value';
+            }
+        }
+
+        async function createSpeedChart() {
+            try {
+                const response = await apiRequest('/speedtest?hours=24');
+                const speedData = response.data;
+
+                const ctx = document.getElementById('speedChart').getContext('2d');
+
+                if (speedChart) speedChart.destroy();
+
+                speedChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: speedData.map(row =>
+                            new Date(row.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+                        ),
+                        datasets: [{
+                            label: 'Download (Mbps)',
+                            data: speedData.map(row => row.download_mbps),
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            tension: 0.1,
+                            fill: false
+                        }, {
+                            label: 'Upload (Mbps)',
+                            data: speedData.map(row => row.upload_mbps),
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            tension: 0.1,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Speed (Mbps)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Time'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(context) {
+                                        if (context.length > 0) {
+                                            const index = context[0].dataIndex;
+                                            return new Date(speedData[index].timestamp).toLocaleString();
+                                        }
+                                        return '';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error creating speed chart:', error);
+            }
+        }
+
+        async function createConnectivityChart() {
+            try {
+                const response = await apiRequest('/hourly-stats?hours=24');
+                const hourlyData = response.data;
+
+                const ctx = document.getElementById('connectivityChart').getContext('2d');
+
+                if (connectivityChart) connectivityChart.destroy();
+
+                connectivityChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: hourlyData.map(row => `${row.hour}:00`),
+                        datasets: [{
+                            label: 'Success Rate (%)',
+                            data: hourlyData.map(row => row.success_rate),
+                            backgroundColor: hourlyData.map(row =>
+                                row.success_rate >= 95 ? '#27ae60' :
+                                row.success_rate >= 90 ? '#f39c12' : '#e74c3c'
+                            ),
+                            borderColor: '#2c3e50',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Success Rate (%)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Hour of Day'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    afterLabel: function(context) {
+                                        const data = hourlyData[context.dataIndex];
+                                        return `${data.successful_tests}/${data.total_tests} successful tests`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error creating connectivity chart:', error);
+            }
+        }
+
+        async function updateEventsList() {
+            try {
+                const response = await apiRequest('/events?hours=168&limit=10'); // Last week, 10 events
+                const events = response.data;
+
+                const eventsContainer = document.getElementById('events-list');
+
+                if (events.length === 0) {
+                    eventsContainer.innerHTML = '<div class="loading">No recent disconnection events 🎉</div>';
+                    return;
+                }
+
+                eventsContainer.innerHTML = events.map(event => `
+                    <div class="event-item">
+                        <div class="event-time">
+                            ${new Date(event.timestamp).toLocaleString()}
+                        </div>
+                        <div class="event-duration">
+                            Disconnected for ${formatDuration(event.duration_seconds)}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error updating events list:', error);
+                document.getElementById('events-list').innerHTML =
+                    '<div class="loading">Error loading events</div>';
+            }
+        }
+
+        async function loadData() {
+            try {
+                // Show loading state
+                document.getElementById('connection-status').textContent = '...';
+
+                // Load main stats
+                const statusResponse = await apiRequest('/status');
+                const stats = statusResponse.stats;
+
+                // Update location info
+                document.getElementById('location').textContent =
+                    `Location: ${stats.location} | Last updated: ${new Date(stats.last_update).toLocaleString()}`;
+
+                // Update status cards
+                updateConnectionStatus(stats);
+                updateDailyStats(stats);
+
+                // Update charts
+                await Promise.all([
+                    createSpeedChart(),
+                    createConnectivityChart(),
+                    updateEventsList()
+                ]);
+
+                // Update last update time
+                document.getElementById('last-update').textContent =
+                    `Data updated: ${new Date().toLocaleString()} | Server uptime: ${Math.floor(statusResponse.uptime || 0)}s`;
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('connection-status').textContent = 'ERROR';
+                document.getElementById('connection-status').className = 'status-value status-bad';
+                document.getElementById('location').textContent = 'Error loading data - check server connection';
+            }
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadData, 30000);
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>

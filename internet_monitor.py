@@ -233,10 +233,10 @@ class InternetMonitor:
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
                 if result.returncode == 0:
                     data = json.loads(result.stdout)
-                    # Ookla JSON structure differs slightly
-                    download_mbps = data.get('download', 0) / 1_000_000
-                    upload_mbps = data.get('upload', 0) / 1_000_000
-                    ping_ms = data.get('latency', {}).get('jitter', 0) or data.get('ping', 0)
+                    # Ookla JSON structure 
+                    download_mbps = data.get('download', {}).get('bandwidth', 0) / 1_000_000
+                    upload_mbps = data.get('upload', {}).get('bandwidth', 0) / 1_000_000
+                    ping_ms = data.get('ping', {}).get('latency', 0)
                     server = f"{data.get('server', {}).get('name', 'Unknown')} - {data.get('server', {}).get('location', '')}"
 
                 else:

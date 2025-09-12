@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   internet-monitor-dashboard:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.vps
     ports:
@@ -11,27 +11,26 @@ services:
       # Node.js Configuration
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=${PORT:-3000}
-      
+
       # Location name for display
-      - LOCATION_NAME=${LOCATION_NAME:-Remote Monitor}
-      
+      - LOCATION_NAME=${LOCATION_NAME:-Home Connection Monitor}
+
       # Timezone (optional)
       - TZ=${TZ:-UTC}
-    
+
     volumes:
-      # Persistent storage for uploaded logs
-      # This is where SCP uploads will land
-      - internet_logs_data:/app/internet_logs
-    
+      # Bind mount to host directory where SCP uploads land
+      - /opt/internet-monitor/logs:/app/internet_logs
+
     restart: unless-stopped
-    
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
-    
+
     # Resource limits (lightweight for dashboard only)
     deploy:
       resources:
@@ -42,6 +41,4 @@ services:
           memory: 128M
           cpus: '0.1'
 
-volumes:
-  internet_logs_data:
-    driver: local
+# No named volumes needed - using bind mounts

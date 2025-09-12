@@ -27,21 +27,21 @@ mkdir -p /app/internet_logs
 # Function to handle shutdown
 shutdown() {
     echo "🛑 Shutting down services..."
-    
+
     # Kill Python monitor if running
     if [ ! -z "$PYTHON_PID" ] && kill -0 $PYTHON_PID 2>/dev/null; then
         echo "📵 Stopping Python monitor (PID: $PYTHON_PID)..."
         kill -TERM $PYTHON_PID
         wait $PYTHON_PID 2>/dev/null || true
     fi
-    
+
     # Kill Node.js server if running
     if [ ! -z "$NODE_PID" ] && kill -0 $NODE_PID 2>/dev/null; then
         echo "🌐 Stopping Node.js server (PID: $NODE_PID)..."
         kill -TERM $NODE_PID
         wait $NODE_PID 2>/dev/null || true
     fi
-    
+
     echo "✅ Shutdown complete"
     exit 0
 }

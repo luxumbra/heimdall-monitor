@@ -18,8 +18,18 @@ import argparse
 from pathlib import Path
 
 class InternetMonitor:
-    def __init__(self, log_dir="internet_logs", ping_interval=30, speedtest_interval=3600, upload_interval=300, config_file="monitor_config.ini"):
+    def __init__(self, log_dir=None, ping_interval=30, speedtest_interval=3600, upload_interval=300, config_file=None):
         import os
+        # Get the script directory and project root
+        script_dir = Path(__file__).parent.absolute()
+        project_root = script_dir.parent.parent
+        
+        # Set default paths relative to project root
+        if log_dir is None:
+            log_dir = project_root / "logs"
+        if config_file is None:
+            config_file = project_root / "config" / "monitor_config.ini"
+            
         # Override defaults with environment variables if present
         ping_interval = int(os.getenv('PING_INTERVAL', ping_interval))
         speedtest_interval = int(os.getenv('SPEEDTEST_INTERVAL', speedtest_interval))
@@ -483,10 +493,10 @@ def main():
                        help='Seconds between speed tests (default: 3600)')
     parser.add_argument('--upload-interval', type=int, default=300,
                        help='Seconds between VPS uploads (default: 300)')
-    parser.add_argument('--log-dir', default='internet_logs',
-                       help='Directory for log files (default: internet_logs)')
-    parser.add_argument('--config', default='monitor_config.ini',
-                       help='Configuration file (default: monitor_config.ini)')
+    parser.add_argument('--log-dir', default=None,
+                       help='Directory for log files (default: auto-detect)')
+    parser.add_argument('--config', default=None,
+                       help='Configuration file (default: auto-detect)')
     parser.add_argument('--report', action='store_true',
                        help='Generate report from existing logs and exit')
     parser.add_argument('--setup-vps', action='store_true',

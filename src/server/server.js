@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')); // Serve static files from public directory
+app.use(express.static('./public')); // Serve static files from public directory
 
 // Utility functions
 function parseCSV(csvText) {
@@ -34,22 +34,22 @@ function parseCSV(csvText) {
 
 async function readCSVFile(filename) {
     try {
-        const fullPath = path.join('internet_logs', filename);
+        const fullPath = path.join(__dirname, '../../logs', filename);
         const csvText = await fs.readFile(fullPath, 'utf8');
         return parseCSV(csvText);
     } catch (error) {
-        console.warn(`Could not read ${filename} from internet_logs:`, error.message);
+        console.warn(`Could not read ${filename} from ../../logs:`, error.message);
         return [];
     }
 }
 
 async function readJSONFile(filename) {
     try {
-        const fullPath = path.join('internet_logs', filename);
+        const fullPath = path.join(__dirname, '../../logs', filename);
         const jsonText = await fs.readFile(fullPath, 'utf8');
         return JSON.parse(jsonText);
     } catch (error) {
-        console.warn(`Could not read ${filename} from internet_logs:`, error.message);
+        console.warn(`Could not read ${filename} from ../../logs:`, error.message);
         return {};
     }
 }

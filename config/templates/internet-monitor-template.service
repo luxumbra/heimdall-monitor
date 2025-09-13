@@ -9,7 +9,7 @@ User=${MONITOR_USER}
 Group=${MONITOR_USER}
 WorkingDirectory=${MONITOR_WORKING_DIR}
 EnvironmentFile=${MONITOR_WORKING_DIR}/.env
-ExecStart=/usr/bin/python3 ${MONITOR_WORKING_DIR}/internet_monitor.py
+ExecStart=/usr/bin/python3 ${MONITOR_WORKING_DIR}/src/monitor/internet_monitor.py
 Restart=always
 RestartSec=10
 
@@ -17,7 +17,7 @@ RestartSec=10
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=${MONITOR_WORKING_DIR}/internet_logs
+ReadWritePaths=${MONITOR_WORKING_DIR}/logs
 PrivateTmp=true
 ProtectKernelTunables=true
 ProtectKernelModules=true

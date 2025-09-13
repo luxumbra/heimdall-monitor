@@ -2,7 +2,7 @@
 # Place this file in /etc/logrotate.d/internet-monitor
 # Replace YOUR_MONITOR_PATH with your actual monitor directory path
 
-YOUR_MONITOR_PATH/internet_logs/*.csv {
+YOUR_MONITOR_PATH/logs/*.csv {
     # Rotate weekly
     weekly
     
@@ -43,7 +43,7 @@ YOUR_MONITOR_PATH/internet_logs/*.csv {
 }
 
 # Separate rule for regular log files
-YOUR_MONITOR_PATH/internet_logs/*.log {
+YOUR_MONITOR_PATH/logs/*.log {
     weekly
     rotate 4
     compress
@@ -57,7 +57,7 @@ YOUR_MONITOR_PATH/internet_logs/*.log {
 }
 
 # Report files - keep fewer as they're summaries
-YOUR_MONITOR_PATH/internet_logs/report_*.txt {
+YOUR_MONITOR_PATH/logs/report_*.txt {
     monthly
     rotate 6
     compress

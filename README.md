@@ -57,7 +57,7 @@ nano monitor_config.ini
 
 ```bash
 # Run monitoring script
-python3 internet_monitor.py
+python3 src/monitor/internet_monitor.py
 
 # Run web dashboard (separate terminal)
 npm start
@@ -80,10 +80,10 @@ For production deployments:
 
 ```bash
 # Install as system service (auto-detects directory)
-./install-service.sh
+./scripts/install-service.sh
 
 # Or specify user and directory explicitly:
-./install-service.sh username /path/to/monitor
+./scripts/install-service.sh username /path/to/monitor
 
 # Manage service
 sudo systemctl start internet-monitor-$USER
@@ -142,21 +142,33 @@ The system tracks:
 ## 📁 File Structure
 
 ```
-internet-monitor/
-├── internet_monitor.py              # Core monitoring script
-├── server.js                        # Web dashboard server
-├── public/index.html                # Dashboard frontend
-├── .env.example                     # Example configuration
-├── monitor_config.ini.example       # Example VPS config
-├── install-service.sh               # Portable service installer
-├── internet-monitor-template.service # Systemd service template
-├── test-portability.sh              # Portability verification script
+heimdall-monitor/
+├── src/
+│   ├── monitor/
+│   │   └── internet_monitor.py      # Core monitoring script
+│   └── server/
+│       ├── server.js                # Web dashboard server
+│       └── public/index.html        # Dashboard frontend
+├── scripts/
+│   ├── install-service.sh           # Portable service installer
+│   ├── setup_monitor.sh             # Initial setup script
+│   └── test-portability.sh          # Portability verification script
+├── config/
+│   ├── templates/
+│   │   ├── internet-monitor-template.service      # Systemd service template
+│   │   ├── internet-monitor-server-template.service # Server service template
+│   │   └── internet-monitor-logrotate.example     # Log rotation config
+│   ├── .env.example                 # Example environment config
+│   └── monitor_config.ini.example   # Example VPS config
+├── logs/                            # Generated log files
+│   ├── connectivity.csv             # Connection test results
+│   ├── speedtest.csv                # Speed test results
+│   ├── events.csv                   # Disconnect events
+│   └── monitor.log                  # Application logs
+├── docs/
+│   └── README.md                    # Documentation
 ├── docker-compose.vps.yml           # VPS Docker config
-└── internet_logs/                   # Generated log files
-    ├── connectivity.csv             # Connection test results
-    ├── speedtest.csv                # Speed test results
-    ├── events.csv                   # Disconnect events
-    └── monitor.log                  # Application logs
+└── package.json                     # Node.js configuration
 ```
 
 ## 🔄 Log Rotation
@@ -191,14 +203,14 @@ Automatic log rotation prevents disk space issues:
 
 ```bash
 # Verify no hard-coded paths exist
-./test-portability.sh
+./scripts/test-portability.sh
 ```
 
 ### Debug Mode
 
 ```bash
 # Run with debug output
-python3 internet_monitor.py --ping-interval 10 --speedtest-interval 60
+python3 src/monitor/internet_monitor.py --ping-interval 10 --speedtest-interval 60
 ```
 
 ## 📜 License

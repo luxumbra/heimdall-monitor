@@ -15,9 +15,10 @@ set -e
 
 # Get parameters
 MONITOR_USER="${1:-$USER}"
-# Auto-detect the directory where this script and internet_monitor.py are located
+# Auto-detect the project root directory (parent of scripts directory)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MONITOR_WORKING_DIR="${2:-$SCRIPT_DIR}"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+MONITOR_WORKING_DIR="${2:-$PROJECT_ROOT}"
 
 echo "🔧 Installing Internet Monitor Service"
 echo "======================================"
@@ -26,13 +27,13 @@ echo "Working Directory: $MONITOR_WORKING_DIR"
 echo ""
 
 # Validate inputs
-if [[ ! -f "$MONITOR_WORKING_DIR/internet_monitor.py" ]]; then
-    echo "❌ Error: internet_monitor.py not found in $MONITOR_WORKING_DIR"
+if [[ ! -f "$MONITOR_WORKING_DIR/src/monitor/internet_monitor.py" ]]; then
+    echo "❌ Error: internet_monitor.py not found in $MONITOR_WORKING_DIR/src/monitor/"
     exit 1
 fi
 
-if [[ ! -f "$MONITOR_WORKING_DIR/.env" ]]; then
-    echo "❌ Error: .env file not found in $MONITOR_WORKING_DIR"
+if [[ ! -f "$MONITOR_WORKING_DIR/.env" ]] && [[ ! -f "$MONITOR_WORKING_DIR/config/.env" ]]; then
+    echo "❌ Error: .env file not found in $MONITOR_WORKING_DIR or $MONITOR_WORKING_DIR/config/"
     echo "Please create .env file with monitor configuration"
     exit 1
 fi
@@ -48,7 +49,7 @@ echo "📝 Creating service file..."
 SERVICE_FILE="/tmp/internet-monitor-$MONITOR_USER.service"
 
 sed "s|\${MONITOR_USER}|$MONITOR_USER|g; s|\${MONITOR_WORKING_DIR}|$MONITOR_WORKING_DIR|g" \
-    internet-monitor-template.service > "$SERVICE_FILE"
+    config/templates/internet-monitor-template.service > "$SERVICE_FILE"
 
 # Install service
 SERVICE_NAME="internet-monitor-$MONITOR_USER"
@@ -73,7 +74,7 @@ echo "The service will:"
 echo "  - Run as user: $MONITOR_USER"
 echo "  - Work in directory: $MONITOR_WORKING_DIR"  
 echo "  - Use configuration from: $MONITOR_WORKING_DIR/.env"
-echo "  - Write logs to: $MONITOR_WORKING_DIR/internet_logs/"
+echo "  - Write logs to: $MONITOR_WORKING_DIR/logs/"
 echo ""
 
 # Offer to start service

@@ -93,14 +93,40 @@ app.get('/api/status', async (req, res) => {
         const recentSpeedtest = getRecentData(speedtest, 24);
         const recentEvents = getDisconnectEvents(events, 24);
 
+        // Get most recent data timestamp from any CSV file
+        const getLatestTimestamp = (datasets) => {
+            let latest = null;
+            for (const dataset of datasets) {
+                if (dataset.length > 0) {
+                    const timestamp = new Date(dataset[dataset.length - 1].timestamp);
+                    if (!latest || timestamp > latest) {
+                        latest = timestamp;
+                    }
+                }
+            }
+            return latest ? latest.toISOString() : new Date().toISOString();
+        };
+
+        // Format uptime as hours:minutes:seconds
+        const formatUptime = (seconds) => {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        };
+
         // Calculate statistics
         const stats = {
             connection_status: 'unknown',
-            uptime_24h: calculateUptime(recentConnectivity),
+            uptime: formatUptime(process.uptime()), // Formatted server uptime
+            uptime_raw: process.uptime(), // Raw seconds for calculations
+            uptime_24h: calculateUptime(recentConnectivity), // Connection uptime percentage
             disconnects_24h: recentEvents.length,
             avg_download_speed: 0,
             avg_upload_speed: 0,
-            last_update: metadata.last_update || new Date().toISOString(),
+            min_download_speed: 0,
+            max_download_speed: 0,
+            last_update: getLatestTimestamp([connectivity, speedtest, events]), // Real data timestamp
             location: metadata.location || 'Unknown',
             total_tests_24h: recentConnectivity.length,
             successful_tests_24h: recentConnectivity.filter(r => r.status === 'connected').length

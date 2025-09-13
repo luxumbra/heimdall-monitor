@@ -3,8 +3,8 @@
 
 set -e
 
-echo "🌐 Internet Connection Monitor Setup"
-echo "===================================="
+echo "🌐 Heimdall Internet Connection Monitor Setup 🌐"
+echo "=============================================="
 
 # Check if running as root on VPS
 if [[ "$1" == "--vps" ]]; then

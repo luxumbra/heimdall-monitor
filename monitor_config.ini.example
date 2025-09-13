@@ -1,0 +1,11 @@
+[VPS]
+enabled = false
+hostname = your-vps-hostname.com
+username = your-username
+key_file = ~/.ssh/your_private_key
+remote_directory = /opt/internet-monitor/logs
+port = 22
+
+[MONITOR]
+location_name = Your Network Name
+timezone = UTC

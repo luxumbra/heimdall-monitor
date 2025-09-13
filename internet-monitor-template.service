@@ -1,0 +1,37 @@
+[Unit]
+Description=Internet Connection Monitor (Python)
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=${MONITOR_USER}
+Group=${MONITOR_USER}
+WorkingDirectory=${MONITOR_WORKING_DIR}
+EnvironmentFile=${MONITOR_WORKING_DIR}/.env
+ExecStart=/usr/bin/python3 ${MONITOR_WORKING_DIR}/internet_monitor.py
+Restart=always
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=${MONITOR_WORKING_DIR}/internet_logs
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+
+# Resource limits
+LimitNOFILE=1024
+MemoryMax=256M
+
+# Environment
+Environment=PYTHONUNBUFFERED=1
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+[Install]
+WantedBy=multi-user.target

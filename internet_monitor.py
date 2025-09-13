@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Internet Connection Monitor
+Heimdall Monitor - Internet Connection Monitor
 Monitors connectivity, logs disconnects, and runs periodic speed tests
 """
 
@@ -19,6 +19,11 @@ from pathlib import Path
 
 class InternetMonitor:
     def __init__(self, log_dir="internet_logs", ping_interval=30, speedtest_interval=3600, upload_interval=300, config_file="monitor_config.ini"):
+        import os
+        # Override defaults with environment variables if present
+        ping_interval = int(os.getenv('PING_INTERVAL', ping_interval))
+        speedtest_interval = int(os.getenv('SPEEDTEST_INTERVAL', speedtest_interval))
+        upload_interval = int(os.getenv('UPLOAD_INTERVAL', upload_interval))
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(exist_ok=True)
         self.ping_interval = ping_interval  # seconds
@@ -188,7 +193,7 @@ class InternetMonitor:
 
         # Consider connected if more than 50% of tests pass
         connected = successful_tests > (total_tests * 0.5)
-        
+
         # Debug logging for connectivity status
         self.logger.debug(f"Connectivity test: {successful_tests}/{total_tests} tests passed, overall status: {'connected' if connected else 'disconnected'}")
 
@@ -254,14 +259,14 @@ class InternetMonitor:
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
                 if result.returncode == 0:
                     output = result.stdout
-                    
+
                     # Parse human-readable output for accurate speeds
                     import re
                     download_match = re.search(r'Download:\s+([\d.]+)\s+Mbps', output)
                     upload_match = re.search(r'Upload:\s+([\d.]+)\s+Mbps', output)
                     ping_match = re.search(r'Idle Latency:\s+([\d.]+)\s+ms', output)
                     server_match = re.search(r'Server:\s+(.+?)\s+\(id:', output)
-                    
+
                     download_mbps = float(download_match.group(1)) if download_match else 0
                     upload_mbps = float(upload_match.group(1)) if upload_match else 0
                     ping_ms = float(ping_match.group(1)) if ping_match else 0

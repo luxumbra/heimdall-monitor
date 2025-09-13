@@ -4,7 +4,7 @@ set -e
 # Internet Monitor Entrypoint Script
 # Runs both Python monitoring and Node.js dashboard
 
-echo "🌐 Starting Internet Monitor Container..."
+echo "🌐 Starting Heimdall Internet Monitor Container..."
 
 # Set default environment variables
 export PING_INTERVAL="${PING_INTERVAL:-30}"
@@ -93,7 +93,7 @@ for i in {1..30}; do
     sleep 1
 done
 
-echo "🚀 Internet Monitor is fully operational!"
+echo "🚀 Heimdall Internet Monitor is fully operational!"
 echo "📊 Web Dashboard: http://localhost:${PORT}"
 echo "📁 Logs directory: /app/internet_logs"
 

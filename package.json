@@ -1,15 +1,15 @@
 {
-  "name": "yggdrasil-monitor",
+  "name": "heimdall-monitor",
   "version": "1.0.0",
-  "description": "Yggdrasil Monitor - Internet connection monitoring server with web dashboard",
+  "description": "Heimdal Monitor - Internet connection monitoring server with web dashboard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "pm2:start": "pm2 start server.js --name yggdrasil-monitor",
-    "pm2:stop": "pm2 stop yggdrasil-monitor",
-    "pm2:restart": "pm2 restart yggdrasil-monitor",
-    "pm2:delete": "pm2 delete yggdrasil-monitor",
+    "pm2:start": "pm2 start server.js --name heimdall-monitor",
+    "pm2:stop": "pm2 stop heimdall-monitor",
+    "pm2:restart": "pm2 restart heimdall-monitor",
+    "pm2:delete": "pm2 delete heimdall-monitor",
     "install-global": "npm install -g pm2 nodemon"
   },
   "keywords": [
@@ -21,7 +21,7 @@
     "norse",
     "yggdrasil"
   ],
-  "author": "Your Name",
+  "author": "luxumbra",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
@@ -35,6 +35,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOUR_USERNAME/internetmon.git"
+    "url": "https://github.com/luxumbra/internet-monitor.git"
   }
 }

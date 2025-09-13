@@ -38,7 +38,7 @@ wheels/
 .installed.cfg
 *.egg
 
-# Environment variables
+# Environment variables  
 .env
 .env.local
 .env.development.local
@@ -47,6 +47,15 @@ wheels/
 
 # Configuration files with sensitive data
 monitor_config.ini
+
+# SSH keys and certificates
+*.pem
+*.key
+id_rsa*
+*.ppk
+
+# Sensitive system files
+/etc/systemd/system/internet-monitor*.service
 
 # OS generated files
 .DS_Store

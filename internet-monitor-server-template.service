@@ -1,0 +1,16 @@
+[Unit]
+Description=Heimdall Monitor Web Server (Node.js)
+After=network.target
+
+[Service]
+Type=simple
+User=${MONITOR_USER}
+WorkingDirectory=${MONITOR_WORKING_DIR}
+ExecStart=/usr/bin/node ${MONITOR_WORKING_DIR}/server.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=PORT=3000
+
+[Install]
+WantedBy=multi-user.target

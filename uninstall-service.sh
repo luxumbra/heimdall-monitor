@@ -4,12 +4,12 @@
 
 set -e
 
-# Get parameters  
+# Get parameters
 MONITOR_USER="${1:-$USER}"
 SERVICE_NAME="internet-monitor-$MONITOR_USER"
 
-echo "🗑️  Uninstalling Internet Monitor Service"
-echo "========================================"
+echo "🗑️  Uninstalling Heimdall Internet Monitor Service"
+echo "========================================="
 echo "Service: $SERVICE_NAME"
 echo ""
 

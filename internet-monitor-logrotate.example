@@ -1,0 +1,67 @@
+# Log rotation configuration for Heimdall Monitor
+# Place this file in /etc/logrotate.d/internet-monitor
+# Replace YOUR_MONITOR_PATH with your actual monitor directory path
+
+YOUR_MONITOR_PATH/internet_logs/*.csv {
+    # Rotate weekly
+    weekly
+    
+    # Keep 8 weeks of logs (2 months)
+    rotate 8
+    
+    # Compress old logs to save space
+    compress
+    delaycompress
+    
+    # Don't rotate if empty
+    notifempty
+    
+    # Create new files with same permissions (replace YOUR_USER with your username)
+    create 644 YOUR_USER YOUR_USER
+    
+    # Don't error if log file is missing
+    missingok
+    
+    # Use date extension instead of numbers
+    dateext
+    dateformat -%Y%m%d
+    
+    # Rotate when file size exceeds 10MB OR weekly (whichever comes first)
+    size 10M
+    
+    # Don't mail old logs
+    nomail
+    
+    # Copy and truncate instead of moving (keeps file handles open)
+    copytruncate
+    
+    # Script to run after rotation
+    postrotate
+        # Optional: Upload rotated logs to VPS for long-term storage
+        # YOUR_MONITOR_PATH/upload_old_logs.sh
+    endscript
+}
+
+# Separate rule for regular log files
+YOUR_MONITOR_PATH/internet_logs/*.log {
+    weekly
+    rotate 4
+    compress
+    delaycompress
+    notifempty
+    create 644 YOUR_USER YOUR_USER
+    missingok
+    dateext
+    size 50M
+    copytruncate
+}
+
+# Report files - keep fewer as they're summaries
+YOUR_MONITOR_PATH/internet_logs/report_*.txt {
+    monthly
+    rotate 6
+    compress
+    notifempty
+    missingok
+    dateext
+}

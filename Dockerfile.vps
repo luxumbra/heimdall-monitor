@@ -1,6 +1,6 @@
-# VPS-only Dockerfile for Internet Monitor Dashboard
+# VPS-only Dockerfile for Heimdall Monitor Dashboard
 # Only runs the Node.js web server to display uploaded logs
-FROM node:18-alpine
+FROM node:22-alpine
 
 # Set working directory
 WORKDIR /app
@@ -14,12 +14,12 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci --only=production
 
-# Copy application files
-COPY server.js ./
-COPY public/ ./public/
+# Copy application files with new structure
+COPY src/server/server.js ./src/server/
+COPY src/server/public/ ./src/server/public/
 
 # Create logs directory for uploaded files
-RUN mkdir -p /app/internet_logs
+RUN mkdir -p /app/logs
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
@@ -35,5 +35,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:3000/health || exit 1
 
-# Start the web server
-CMD ["npm", "start"]
+# Start the web server with new structure
+CMD ["node", "src/server/server.js"]

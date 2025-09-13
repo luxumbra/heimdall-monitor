@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  internet-monitor-dashboard:
+  heimdall-monitor-dashboard:
     build:
       context: .
       dockerfile: Dockerfile.vps
@@ -20,7 +20,7 @@ services:
 
     volumes:
       # Bind mount to host directory where SCP uploads land
-      - /opt/internet-monitor/logs:/app/internet_logs
+      - /opt/internet-monitor/logs:/app/logs
 
     restart: unless-stopped
 

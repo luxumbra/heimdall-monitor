@@ -19,8 +19,8 @@ RUN apt-get update && apt-get install -y \
     iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 18.x
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+# Install Node.js 22.x (latest LTS)
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs
 
 # Install Ookla Speedtest CLI
@@ -42,8 +42,8 @@ RUN npm ci --only=production
 # Copy application files
 COPY . .
 
-# Create logs directory
-RUN mkdir -p /app/internet_logs
+# Create logs directory with new structure
+RUN mkdir -p /app/logs
 
 # Make entrypoint script executable
 RUN chmod +x entrypoint.sh

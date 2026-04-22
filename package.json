@@ -10,7 +10,7 @@
     "pm2:stop": "pm2 stop heimdall-monitor",
     "pm2:restart": "pm2 restart heimdall-monitor",
     "pm2:delete": "pm2 delete heimdall-monitor",
-    "install-global": "npm install -g pm2 nodemon"
+    "install-global": "pnpm add -g pm2 nodemon"
   },
   "keywords": [
     "internet",
@@ -31,8 +31,10 @@
     "nodemon": "^3.0.1"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
   },
+  "packageManager": "pnpm@9.15.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/luxumbra/internet-monitor.git"

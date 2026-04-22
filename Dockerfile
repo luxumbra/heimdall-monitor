@@ -1,8 +1,11 @@
 # Multi-stage build for Internet Monitor with Python + Node.js
-FROM ubuntu:22.04
+FROM node:22-bookworm-slim
 
 # Avoid prompts from apt
 ENV DEBIAN_FRONTEND=noninteractive
+
+# Enable corepack for pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Set working directory
 WORKDIR /app
@@ -13,16 +16,10 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv \
     curl \
-    gnupg2 \
-    software-properties-common \
     ca-certificates \
     iputils-ping \
     bash \
     && rm -rf /var/lib/apt/lists/*
-
-# Install Node.js 18.x
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs
 
 # Install Speedtest CLI if available (optional)
 RUN curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | bash 2>/dev/null || true
@@ -34,11 +31,11 @@ RUN pip3 install --no-cache-dir \
     schedule \
     configparser
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
 
 # Install Node.js dependencies
-RUN npm ci --only=production
+RUN pnpm install --frozen-lockfile --prod
 
 # Copy application files
 COPY . .

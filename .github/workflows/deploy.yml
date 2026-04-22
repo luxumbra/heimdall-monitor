@@ -5,7 +5,7 @@ name: Deploy Heimdall Monitor to Dokploy
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main]
   workflow_dispatch:
 
 env:
@@ -69,13 +69,10 @@ jobs:
               -e TZ=UTC \
               -v internet_logs_data:/app/internet_logs \
               ghcr.io/${{ env.IMAGE_NAME }}:latest
-            
+
             echo "✅ Deployment complete!"
 
       - name: Verify deployment
         run: |
           echo "Dashboard will be available at: http://<your-vps-ip>:3000"
           echo "API Status: http://<your-vps-ip>:3000/api/status"
-
-volumes:
-  internet_logs_data:

@@ -21,15 +21,6 @@ RUN apt-get update && apt-get install -y \
     bash \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Speedtest CLI if available (optional)
-RUN curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | bash 2>/dev/null || true
-RUN apt-get install -y speedtest 2>/dev/null || true
-
-# Install Python dependencies
-RUN pip3 install --no-cache-dir \
-    requests \
-    schedule \
-    configparser
 
 # Copy package files
 COPY package.json pnpm-lock.yaml ./

@@ -9,13 +9,13 @@ services:
       - "${PORT:-3000}:3000"
     environment:
       # Node.js Configuration
-      - NODE_ENV=${NODE_ENV:-production}
+      - NODE_ENV=production
       - PORT=${PORT:-3000}
       
       # Monitor Configuration
       - PING_INTERVAL=${PING_INTERVAL:-30}
-      - SPEEDTEST_INTERVAL=${SPEEDTEST_INTERVAL:-3600}
-      - UPLOAD_INTERVAL=${UPLOAD_INTERVAL:-300}
+      - SPEEDTEST_INTERVAL=${SPEEDTEST_INTERVAL:-300}
+      - UPLOAD_INTERVAL=${UPLOAD_INTERVAL:-120}
       - LOCATION_NAME=${LOCATION_NAME:-Home Connection Monitor}
       
       # Timezone (optional)

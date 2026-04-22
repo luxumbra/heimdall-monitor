@@ -1,0 +1,81 @@
+# GitHub Actions Workflow for Heimdall Monitor
+# Deploy to Dokploy managed VPS using GitHub Container Registry
+
+name: Deploy Heimdall Monitor to Dokploy
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
+  CONTAINER_NAME: internet-monitor-dashboard
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.IMAGE_NAME }}:latest
+          platforms: linux/amd64
+
+      - name: Deploy to Dokploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DOKPLOY_HOST }}
+          username: ${{ secrets.DOKPLOY_USERNAME }}
+          key: ${{ secrets.DOKPLOY_SSH_KEY }}
+          port: ${{ secrets.DOKPLOY_PORT }}
+          script: |
+            # Pull and run the new image from GitHub Container Registry
+            docker pull ghcr.io/${{ env.IMAGE_NAME }}:latest || true
+            docker stop ${{ env.CONTAINER_NAME }} || true
+            docker rm ${{ env.CONTAINER_NAME }} || true
+            docker run -d \
+              --name ${{ env.CONTAINER_NAME }} \
+              -p 3000:3000 \
+              -e NODE_ENV=production \
+              -e PORT=3000 \
+              -e PING_INTERVAL=30 \
+              -e SPEEDTEST_INTERVAL=300 \
+              -e UPLOAD_INTERVAL=120 \
+              -e LOCATION_NAME="Home Connection Monitor" \
+              -e TZ=UTC \
+              -v internet_logs_data:/app/internet_logs \
+              ghcr.io/${{ env.IMAGE_NAME }}:latest
+            
+            echo "✅ Deployment complete!"
+
+      - name: Verify deployment
+        run: |
+          echo "Dashboard will be available at: http://<your-vps-ip>:3000"
+          echo "API Status: http://<your-vps-ip>:3000/api/status"
+
+volumes:
+  internet_logs_data:

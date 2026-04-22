@@ -1,25 +1,26 @@
 version: '3.8'
 
 services:
-  internet-monitor:
-    build: 
+  internet-monitor-dashboard:
+    image: heimdall-monitor-internet-monitor:latest
+    build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "${PORT:-3000}:3000"
     environment:
       # Node.js Configuration
-      - NODE_ENV=${NODE_ENV:-production}
-      - PORT=${PORT:-3000}
+      - NODE_ENV=production
+      - PORT=3000
       
       # Monitor Configuration
-      - PING_INTERVAL=${PING_INTERVAL:-30}
-      - SPEEDTEST_INTERVAL=${SPEEDTEST_INTERVAL:-3600}
-      - UPLOAD_INTERVAL=${UPLOAD_INTERVAL:-300}
-      - LOCATION_NAME=${LOCATION_NAME:-Home Connection Monitor}
+      - PING_INTERVAL=30
+      - SPEEDTEST_INTERVAL=300
+      - UPLOAD_INTERVAL=120
+      - LOCATION_NAME="Home Connection Monitor"
       
-      # Timezone (optional)
-      - TZ=${TZ:-UTC}
+      # Timezone
+      - TZ=UTC
     
     volumes:
       # Persistent storage for logs and data

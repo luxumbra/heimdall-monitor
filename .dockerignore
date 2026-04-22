@@ -1,7 +1,4 @@
 node_modules
 internet_logs
 .git
-*.md
-*.sh
-*.ini
-*.py
+__pycache__

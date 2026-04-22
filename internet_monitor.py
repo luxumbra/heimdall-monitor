@@ -4,6 +4,10 @@ Heimdall Monitor - Internet Connection Monitor
 Monitors connectivity, logs disconnects, and runs periodic speed tests
 """
 
+import os
+# Set proper file permissions for uploaded files
+os.umask(0o022)
+
 import time
 import subprocess
 import json

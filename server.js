@@ -129,7 +129,10 @@ app.get("/api/status", async (req, res) => {
       connection_status: "unknown",
       uptime: formatUptime(process.uptime()), // Formatted server uptime
       uptime_raw: process.uptime(), // Raw seconds for calculations
-      uptime_24h: calculateUptime(recentConnectivity) ?? 0, // Connection uptime percentage
+      uptime_24h:
+        recentConnectivity.length === 0
+          ? 0
+          : calculateUptime(recentConnectivity), // Connection uptime percentage
       disconnects_24h: recentEvents.length,
       avg_download_speed: 0,
       avg_upload_speed: 0,

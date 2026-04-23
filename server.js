@@ -304,7 +304,7 @@ app.get("/api/hourly-stats", async (req, res) => {
         hour: hourStart.getHours(),
         total_tests: 0,
         successful_tests: 0,
-        success_rate: 100,
+        success_rate: 0,
       };
     }
 

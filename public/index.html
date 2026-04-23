@@ -147,7 +147,6 @@
         padding: 10px 20px;
         border-radius: 5px;
         cursor: pointer;
-        margin-top: 20px;
         transition:
           color 0.3s ease,
           background 0.3s ease;
@@ -164,7 +163,15 @@
       <div class="header">
         <h1>Heimdall Monitor</h1>
         <p id="location">Loading...</p>
-        <div style="margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap">
+        <div
+          style="
+            margin: 32px 0 0;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            column-gap: 10px;
+          "
+        >
           <select
             id="time-range"
             onchange="loadData()"

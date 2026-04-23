@@ -71,10 +71,29 @@ function getRecentData(data, hours = 24) {
 function calculateUptime(connectivityData) {
   if (connectivityData.length === 0) return null;
 
-  const successful = connectivityData.filter(
-    (row) => row.status === "connected",
-  ).length;
-  return (successful / connectivityData.length) * 100;
+  const MAX_EXPECTED_GAP = 5 * 60 * 1000; // 5 minutes
+  let validTests = 0;
+  let successful = 0;
+
+  for (let i = 0; i < connectivityData.length; i++) {
+    const current = new Date(connectivityData[i].timestamp).getTime();
+
+    if (i > 0) {
+      const previous = new Date(connectivityData[i - 1].timestamp).getTime();
+      const gap = current - previous;
+
+      if (gap > MAX_EXPECTED_GAP) {
+        continue;
+      }
+    }
+
+    validTests++;
+    if (connectivityData[i].status === "connected") {
+      successful++;
+    }
+  }
+
+  return validTests === 0 ? 0 : (successful / validTests) * 100;
 }
 
 function getDisconnectEvents(eventsData, hours = 24) {

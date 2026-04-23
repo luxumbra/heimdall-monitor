@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   internet-monitor-dashboard:
     image: heimdall-monitor-internet-monitor:latest
@@ -12,38 +10,38 @@ services:
       # Node.js Configuration
       - NODE_ENV=production
       - PORT=3000
-      
+
       # Monitor Configuration
       - PING_INTERVAL=30
       - SPEEDTEST_INTERVAL=300
       - UPLOAD_INTERVAL=120
       - LOCATION_NAME="Home Connection Monitor"
-      
+
       # Timezone
       - TZ=UTC
-    
+
     volumes:
       # Persistent storage for logs and data
       - internet_logs_data:/app/internet_logs
-    
+
     restart: unless-stopped
-    
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
-    
+
     # Resource limits
     deploy:
       resources:
         limits:
           memory: 512M
-          cpus: '0.5'
+          cpus: "0.5"
         reservations:
           memory: 256M
-          cpus: '0.25'
+          cpus: "0.25"
 
 volumes:
   internet_logs_data:

@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Heimdall Monitor - Device Testing</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/web-app-manifest-192x192.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/web-app-manifest-192x192.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/web-app-manifest-192x192.png"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Ubuntu", Roboto, sans-serif;
+        background: #18181b;
+        color: #a8b0a3;
+        line-height: 1.6;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .header {
+        background: #18181b;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+
+      .header-logo {
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+      }
+
+      .header h1 {
+        color: #a8b0a3;
+        margin: 0;
+        flex-grow: 1;
+      }
+
+      .device-info {
+        background: #2d2d32;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+      }
+
+      .device-info h2 {
+        color: #a8b0a3;
+        margin-bottom: 10px;
+        font-size: 1.2em;
+      }
+
+      .device-id {
+        font-family: monospace;
+        color: #7f8c8d;
+        font-size: 0.9em;
+      }
+
+      .test-section {
+        background: #2b2b30;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+
+      .test-section h2 {
+        color: #a8b0a3;
+        margin-bottom: 15px;
+      }
+
+      .test-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+
+      .test-btn {
+        background: #27ae60;
+        color: #18181b;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .test-btn:hover {
+        background: #2ecc71;
+        transform: translateY(-2px);
+      }
+
+      .test-btn:disabled {
+        background: #7f8c8d;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .test-btn.secondary {
+        background: #3498db;
+      }
+
+      .test-btn.secondary:hover {
+        background: #5dade2;
+      }
+
+      .test-btn.danger {
+        background: #e74c3c;
+      }
+
+      .test-btn.danger:hover {
+        background: #ec7063;
+      }
+
+      .auto-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      .auto-toggle label {
+        color: #a8b0a3;
+        cursor: pointer;
+      }
+
+      .auto-toggle input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+      }
+
+      .auto-toggle select {
+        padding: 5px 10px;
+        border-radius: 5px;
+        background: #2d2d32;
+        color: #a8b0a3;
+        border: none;
+        cursor: pointer;
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+        animation: pulse 2s infinite;
+      }
+
+      .status-indicator.running {
+        background: #27ae60;
+        box-shadow: 0 0 10px #27ae60;
+      }
+
+      .status-indicator.stopped {
+        background: #e74c3c;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .test-results {
+        margin-top: 20px;
+      }
+
+      .result-card {
+        background: #2d2d32;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border-left: 4px solid transparent;
+      }
+
+      .result-card.success {
+        border-left-color: #27ae60;
+      }
+
+      .result-card.failure {
+        border-left-color: #e74c3c;
+      }
+
+      .result-card h4 {
+        color: #a8b0a3;
+        margin-bottom: 5px;
+      }
+
+      .result-card .result-value {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #27ae60;
+      }
+
+      .result-card .result-value.failure {
+        color: #e74c3c;
+      }
+
+      .result-card .result-time {
+        color: #7f8c8d;
+        font-size: 0.9em;
+      }
+
+      .chart-container {
+        background: #2b2b30;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+
+      .chart-container canvas {
+        height: 300px !important;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #a8b0a3;
+      }
+
+      .last-update {
+        text-align: center;
+        color: #7f8c8d;
+        font-size: 0.9em;
+        margin-top: 20px;
+      }
+
+      .connection-type {
+        display: inline-block;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        margin-left: 10px;
+      }
+
+      .connection-type.wifi {
+        background: #3498db;
+        color: #18181b;
+      }
+
+      .connection-type.ethernet {
+        background: #27ae60;
+        color: #18181b;
+      }
+
+      .connection-type.mobile {
+        background: #e74c3c;
+        color: #18181b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img
+          src="/web-app-manifest-192x192.png"
+          alt="Heimdall Monitor Logo"
+          class="header-logo"
+        />
+        <h1>Device Monitor</h1>
+        <div id="device-info" style="text-align: right; flex-grow: 1">
+          <div id="device-name">Registering device...</div>
+          <div class="device-id" id="device-id"></div>
+          <div style="margin-top: 5px">
+            <span id="connection-type-badge" class="connection-type wifi"
+              >WiFi</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="device-info">
+        <h2>Device Information</h2>
+        <p><strong>Browser:</strong> <span id="browser-info"></span></p>
+        <p><strong>Platform:</strong> <span id="platform-info"></span></p>
+        <p>
+          <strong>IP Address:</strong> <span id="ip-address">Detecting...</span>
+        </p>
+        <p><strong>Local Time:</strong> <span id="local-time"></span></p>
+      </div>
+
+      <div class="test-section">
+        <h2>
+          <span
+            id="auto-status-indicator"
+            class="status-indicator stopped"
+          ></span>
+          Quick Tests
+        </h2>
+        <div class="test-buttons">
+          <button class="test-btn" onclick="runConnectivityTest()">
+            Test Connectivity
+          </button>
+          <button class="test-btn secondary" onclick="runSpeedTest()">
+            Run Speed Test
+          </button>
+          <button class="test-btn danger" onclick="runAllTests()">
+            Run All Tests
+          </button>
+        </div>
+
+        <div class="auto-toggle">
+          <input
+            type="checkbox"
+            id="auto-test-toggle"
+            onchange="toggleAutoTest()"
+          />
+          <label for="auto-test-toggle">Auto-test enabled</label>
+          <select id="auto-test-interval" onchange="updateAutoTestInterval()">
+            <option value="300">Every 5 minutes</option>
+            <option value="900" selected>Every 15 minutes</option>
+            <option value="1800">Every 30 minutes</option>
+            <option value="3600">Every 1 hour</option>
+          </select>
+          <span
+            id="auto-test-countdown"
+            style="margin-left: 15px; color: #7f8c8d"
+          ></span>
+        </div>
+
+        <div id="test-results" class="test-results"></div>
+      </div>
+
+      <div class="chart-container">
+        <h2>Recent Speed Test Results</h2>
+        <canvas id="speedChart" width="400" height="200"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <h2>Connectivity History</h2>
+        <canvas id="connectivityChart" width="400" height="200"></canvas>
+      </div>
+
+      <div class="last-update" id="last-update">Last updated: Never</div>
+    </div>
+
+    <script>
+      let speedChart = null;
+      let connectivityChart = null;
+      let deviceId = null;
+      let autoTestInterval = null;
+      let autoTestSeconds = 0;
+      let autoTestRunning = false;
+
+      const API_BASE = "";
+
+      // Initialize device
+      async function initDevice() {
+        try {
+          // Try to get existing device ID from localStorage
+          deviceId = localStorage.getItem("heimdall_device_id");
+
+          if (!deviceId) {
+            // Register new device
+            const deviceName = prompt(
+              "Welcome! Please enter a name for this device (e.g., 'Work Laptop', 'iPhone 12'):",
+              "My Device",
+            );
+
+            const deviceType = getDeviceType();
+
+            const response = await fetch(`${API_BASE}/api/devices`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                name: deviceName,
+                type: deviceType,
+                location: "",
+              }),
+            });
+
+            const data = await response.json();
+            if (data.status === "success") {
+              deviceId = data.device_id;
+              localStorage.setItem("heimdall_device_id", deviceId);
+              localStorage.setItem("heimdall_device_name", data.device.name);
+              localStorage.setItem("heimdall_device_type", data.device.type);
+            }
+          }
+
+          // Update UI
+          const deviceName =
+            localStorage.getItem("heimdall_device_name") || "Unknown";
+          const deviceType =
+            localStorage.getItem("heimdall_device_type") || "unknown";
+
+          document.getElementById("device-name").textContent = deviceName;
+          document.getElementById("device-id").textContent =
+            `Device ID: ${deviceId}`;
+          document.getElementById("platform-info").textContent =
+            navigator.platform || "Unknown";
+          document.getElementById("browser-info").textContent =
+            navigator.userAgent;
+
+          // Detect connection type
+          const connection =
+            navigator.connection ||
+            navigator.mozConnection ||
+            navigator.webkitConnection;
+          let connType = "wifi";
+          if (connection) {
+            if (connection.type === "cellular") connType = "mobile";
+            else if (connection.type === "ethernet") connType = "ethernet";
+          }
+          document.getElementById("connection-type-badge").className =
+            `connection-type ${connType}`;
+          document.getElementById("connection-type-badge").textContent =
+            connType.charAt(0).toUpperCase() + connType.slice(1);
+
+          updateLocalTime();
+          setInterval(updateLocalTime, 1000);
+
+          // Load existing data
+          await loadDeviceData();
+          await createCharts();
+        } catch (error) {
+          console.error("Error initializing device:", error);
+          document.getElementById("device-name").textContent =
+            "Error initializing device";
+        }
+      }
+
+      function getDeviceType() {
+        const ua = navigator.userAgent.toLowerCase();
+        if (
+          ua.includes("mobile") ||
+          ua.includes("android") ||
+          ua.includes("iphone")
+        ) {
+          return "mobile";
+        } else if (ua.includes("tablet") || ua.includes("ipad")) {
+          return "tablet";
+        }
+        return "desktop";
+      }
+
+      function updateLocalTime() {
+        document.getElementById("local-time").textContent =
+          new Date().toLocaleString();
+      }
+
+      async function detectIP() {
+        try {
+          // Try to get IP from WebRTC
+          const pc = new RTCPeerConnection({
+            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+          });
+          pc.createDataChannel("");
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+
+          const ip = await new Promise((resolve) => {
+            pc.onicecandidate = (ice) => {
+              if (ice.candidate) {
+                const match =
+                  ice.candidate.candidate.match(/(\d+\.\d+\.\d+\.\d+)/);
+                if (match) resolve(match[1]);
+              }
+            };
+            setTimeout(() => resolve("Unknown"), 1000);
+          });
+
+          pc.close();
+          return ip;
+        } catch (error) {
+          return "Unknown";
+        }
+      }
+
+      async function loadDeviceData() {
+        try {
+          const hours = 24;
+          const response = await fetch(
+            `${API_BASE}/api/device/${deviceId}/data?hours=${hours}`,
+          );
+          const data = await response.json();
+
+          if (data.status === "success") {
+            updateCharts(data.data);
+          }
+        } catch (error) {
+          console.error("Error loading device data:", error);
+        }
+      }
+
+      async function createCharts() {
+        const speedCtx = document.getElementById("speedChart").getContext("2d");
+        speedChart = new Chart(speedCtx, {
+          type: "line",
+          data: {
+            labels: [],
+            datasets: [
+              {
+                label: "Download (Mbps)",
+                data: [],
+                borderColor: "#3498db",
+                backgroundColor: "rgba(52, 152, 219, 0.1)",
+                tension: 0.1,
+                fill: false,
+              },
+              {
+                label: "Upload (Mbps)",
+                data: [],
+                borderColor: "#e74c3c",
+                backgroundColor: "rgba(231, 76, 60, 0.1)",
+                tension: 0.1,
+                fill: false,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: "Speed (Mbps)" },
+              },
+              x: {
+                title: { display: true, text: "Time" },
+              },
+            },
+          },
+        });
+
+        const connCtx = document
+          .getElementById("connectivityChart")
+          .getContext("2d");
+        connectivityChart = new Chart(connCtx, {
+          type: "bar",
+          data: {
+            labels: [],
+            datasets: [
+              {
+                label: "Success Rate (%)",
+                data: [],
+                backgroundColor: "#27ae60",
+                borderColor: "#2c3e50",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                title: { display: true, text: "Success Rate (%)" },
+              },
+              x: {
+                title: { display: true, text: "Time" },
+              },
+            },
+          },
+        });
+      }
+
+      function updateCharts(data) {
+        // Update speed chart
+        if (speedChart && data.speedtest && data.speedtest.length > 0) {
+          const labels = data.speedtest.map((row) =>
+            new Date(row.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          );
+          speedChart.data.labels = labels;
+          speedChart.data.datasets[0].data = data.speedtest.map(
+            (row) => row.download_mbps,
+          );
+          speedChart.data.datasets[1].data = data.speedtest.map(
+            (row) => row.upload_mbps,
+          );
+          speedChart.update();
+        }
+
+        // Update connectivity chart
+        if (
+          connectivityChart &&
+          data.connectivity &&
+          data.connectivity.length > 0
+        ) {
+          // Group by hour
+          const hourlyData = {};
+          data.connectivity.forEach((row) => {
+            const hour = new Date(row.timestamp).toISOString().substring(0, 13);
+            if (!hourlyData[hour]) {
+              hourlyData[hour] = { total: 0, success: 0 };
+            }
+            hourlyData[hour].total++;
+            if (row.status === "connected") hourlyData[hour].success++;
+          });
+
+          const labels = Object.keys(hourlyData);
+          const rates = labels.map((h) =>
+            ((hourlyData[h].success / hourlyData[h].total) * 100).toFixed(1),
+          );
+
+          connectivityChart.data.labels = labels;
+          connectivityChart.data.datasets[0].data = rates;
+          connectivityChart.update();
+        }
+      }
+
+      async function runConnectivityTest() {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = "Testing...";
+
+        const targets = [
+          "https://www.google.com",
+          "https://www.cloudflare.com",
+          "https://1.1.1.1",
+        ];
+
+        const results = [];
+        const startTime = Date.now();
+
+        for (const target of targets) {
+          try {
+            const start = performance.now();
+            const response = await fetch(target, {
+              mode: "no-cors",
+              cache: "no-cache",
+            });
+            const responseTime = performance.now() - start;
+            results.push({
+              target: target,
+              status: "connected",
+              response_time_ms: Math.round(responseTime),
+              method: "http",
+            });
+          } catch (error) {
+            results.push({
+              target: target,
+              status: "disconnected",
+              response_time_ms: null,
+              method: "http",
+            });
+          }
+        }
+
+        const successful = results.filter(
+          (r) => r.status === "connected",
+        ).length;
+        const totalTime = Date.now() - startTime;
+
+        // Display results
+        const resultsDiv = document.getElementById("test-results");
+        resultsDiv.innerHTML = `
+          <div class="result-card ${successful === targets.length ? "success" : "failure"}">
+            <h4>Connectivity Test Results</h4>
+            <div class="result-value ${successful === targets.length ? "" : "failure"}">
+              ${successful}/${targets.length} targets reachable
+            </div>
+            <div class="result-time">Completed in ${totalTime}ms</div>
+            <div style="margin-top: 10px; font-size: 0.9em;">
+              ${results.map((r) => `${r.target}: ${r.status} ${r.response_time_ms ? `(${r.response_time_ms}ms)` : ""}`).join("<br>")}
+            </div>
+          </div>
+        `;
+
+        // Save to server
+        await saveTestResults({
+          connectivity: results[0],
+          timestamp: new Date().toISOString(),
+        });
+
+        btn.disabled = false;
+        btn.textContent = "Test Connectivity";
+        updateLastUpdate();
+      }
+
+      async function runSpeedTest() {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = "Running...";
+
+        const resultsDiv = document.getElementById("test-results");
+        resultsDiv.innerHTML =
+          '<div class="loading">Running speed test... This may take 30-60 seconds.</div>';
+
+        try {
+          // Use external speed test API or measure download speed
+          const startTime = Date.now();
+          const testUrl =
+            "https://raw.githubusercontent.com/inventer-dev/speedtest-files/main/128KB.bin";
+
+          const response = await fetch(testUrl + "?t=" + Date.now(), {
+            cache: "no-cache",
+          });
+
+          if (!response.ok) throw new Error("Speed test failed");
+
+          const blob = await response.blob();
+          const endTime = Date.now();
+          const duration = (endTime - startTime) / 1000;
+          const fileSize = blob.size;
+          const downloadSpeed = (fileSize * 8) / (duration * 1000000); // Mbps
+
+          // Estimate upload speed (smaller test)
+          const uploadStart = Date.now();
+          await fetch("https://httpbin.org/post", {
+            method: "POST",
+            body: JSON.stringify({ test: "data" }),
+            headers: { "Content-Type": "application/json" },
+          });
+          const uploadDuration = (Date.now() - uploadStart) / 1000;
+          const uploadSpeed = 0.1 / uploadDuration; // Rough estimate
+
+          const ping = Math.round(duration * 1000);
+
+          const result = {
+            download_mbps: downloadSpeed.toFixed(2),
+            upload_mbps: uploadSpeed.toFixed(2),
+            ping_ms: ping,
+            server: "External Test Server",
+            status: "success",
+          };
+
+          resultsDiv.innerHTML = `
+            <div class="result-card success">
+              <h4>Speed Test Results</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
+                <div>
+                  <div style="color: #7f8c8d; font-size: 0.9em;">Download</div>
+                  <div class="result-value">${result.download_mbps} Mbps</div>
+                </div>
+                <div>
+                  <div style="color: #7f8c8d; font-size: 0.9em;">Upload</div>
+                  <div class="result-value">${result.upload_mbps} Mbps</div>
+                </div>
+                <div>
+                  <div style="color: #7f8c8d; font-size: 0.9em;">Ping</div>
+                  <div class="result-value">${result.ping_ms} ms</div>
+                </div>
+                <div>
+                  <div style="color: #7f8c8d; font-size: 0.9em;">Server</div>
+                  <div>${result.server}</div>
+                </div>
+              </div>
+            </div>
+          `;
+
+          // Save to server
+          await saveTestResults({
+            speedtest: result,
+            timestamp: new Date().toISOString(),
+          });
+        } catch (error) {
+          console.error("Speed test error:", error);
+          resultsDiv.innerHTML = `
+            <div class="result-card failure">
+              <h4>Speed Test Failed</h4>
+              <div style="color: #e74c3c;">${error.message}</div>
+            </div>
+          `;
+        }
+
+        btn.disabled = false;
+        btn.textContent = "Run Speed Test";
+        updateLastUpdate();
+        await loadDeviceData();
+      }
+
+      async function runAllTests() {
+        await runConnectivityTest();
+        await new Promise((r) => setTimeout(r, 1000));
+        await runSpeedTest();
+      }
+
+      async function saveTestResults(data) {
+        try {
+          await fetch(`${API_BASE}/api/device/${deviceId}/test`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          });
+        } catch (error) {
+          console.error("Error saving test results:", error);
+        }
+      }
+
+      function toggleAutoTest() {
+        const toggle = document.getElementById("auto-test-toggle");
+        const indicator = document.getElementById("auto-status-indicator");
+
+        if (toggle.checked) {
+          autoTestRunning = true;
+          indicator.className = "status-indicator running";
+          startAutoTest();
+        } else {
+          autoTestRunning = false;
+          indicator.className = "status-indicator stopped";
+          stopAutoTest();
+        }
+      }
+
+      function startAutoTest() {
+        const interval = parseInt(
+          document.getElementById("auto-test-interval").value,
+        );
+        autoTestSeconds = interval;
+        updateCountdown();
+
+        autoTestInterval = setInterval(() => {
+          autoTestSeconds--;
+          updateCountdown();
+
+          if (autoTestSeconds <= 0) {
+            runAllTests();
+            autoTestSeconds = interval;
+          }
+        }, 1000);
+      }
+
+      function stopAutoTest() {
+        if (autoTestInterval) {
+          clearInterval(autoTestInterval);
+          autoTestInterval = null;
+        }
+        document.getElementById("auto-test-countdown").textContent = "";
+      }
+
+      function updateAutoTestInterval() {
+        if (autoTestRunning) {
+          stopAutoTest();
+          startAutoTest();
+        }
+      }
+
+      function updateCountdown() {
+        const minutes = Math.floor(autoTestSeconds / 60);
+        const seconds = autoTestSeconds % 60;
+        document.getElementById("auto-test-countdown").textContent =
+          `Next test in: ${minutes}:${seconds.toString().padStart(2, "0")}`;
+      }
+
+      function updateLastUpdate() {
+        document.getElementById("last-update").textContent =
+          `Last updated: ${new Date().toLocaleString()}`;
+      }
+
+      // Initialize on page load
+      document.addEventListener("DOMContentLoaded", initDevice);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,55 @@
+<svg width="512" height="512" viewBox="-30 -30 572 572" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a2a2a"></stop>
+      <stop offset="100%" stop-color="#101010"></stop>
+    </radialGradient>
+  </defs>
+
+  
+  <circle cx="256" cy="256" r="230" fill="url(#bg-grad)"></circle>
+
+  
+  <circle cx="256" cy="256" r="252" fill="none" stroke="#22c55e" stroke-width="18"></circle>
+  <circle cx="256" cy="256" r="238" fill="none" stroke="#22c55e" stroke-width="3" opacity="0.3"></circle>
+
+  
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#22d3ee" stroke-width="1.5" opacity="0.18"></circle>
+  <circle cx="256" cy="256" r="138" fill="none" stroke="#22d3ee" stroke-width="1.5" opacity="0.28"></circle>
+  <circle cx="256" cy="256" r="96" fill="none" stroke="#22d3ee" stroke-width="2" opacity="0.40"></circle>
+  <circle cx="256" cy="256" r="56" fill="none" stroke="#22d3ee" stroke-width="2" opacity="0.60"></circle>
+
+  
+  <line x1="256" y1="76" x2="256" y2="436" stroke="#22d3ee" stroke-width="1" opacity="0.08"></line>
+  <line x1="76" y1="256" x2="436" y2="256" stroke="#22d3ee" stroke-width="1" opacity="0.08"></line>
+  <line x1="134" y1="134" x2="378" y2="378" stroke="#22d3ee" stroke-width="0.8" opacity="0.06"></line>
+  <line x1="378" y1="134" x2="134" y2="378" stroke="#22d3ee" stroke-width="0.8" opacity="0.06"></line>
+
+  
+  <path d="M256,256 L390,122 A180,180 0 0,1 436,256 Z" fill="#22d3ee" opacity="0.06"></path>
+  <line x1="256" y1="256" x2="420" y2="92" stroke="#22d3ee" stroke-width="2" opacity="0.5"></line>
+
+  
+  <circle cx="388" cy="124" r="7" fill="#22d3ee" opacity="0.85"></circle>
+  <circle cx="344" cy="162" r="5" fill="#22d3ee" opacity="0.60"></circle>
+  <circle cx="148" cy="352" r="6" fill="#22c55e" opacity="0.70"></circle>
+  <circle cx="380" cy="280" r="4" fill="#22d3ee" opacity="0.50"></circle>
+  <circle cx="152" cy="172" r="4" fill="#22c55e" opacity="0.45"></circle>
+
+  
+  <line x1="256" y1="256" x2="148" y2="352" stroke="#22c55e" stroke-width="1" opacity="0.25"></line>
+  <line x1="256" y1="256" x2="380" y2="280" stroke="#22d3ee" stroke-width="1" opacity="0.20"></line>
+
+  
+  <circle cx="256" cy="256" r="28" fill="none" stroke="#22d3ee" stroke-width="3" opacity="0.9"></circle>
+  <circle cx="256" cy="256" r="24" fill="#22d3ee" opacity="0.15"></circle>
+  <circle cx="256" cy="256" r="12" fill="#22d3ee" opacity="0.9"></circle>
+  <circle cx="262" cy="250" r="3.5" fill="white" opacity="0.5"></circle>
+
+  
+  <circle cx="256" cy="64" r="10" fill="#22c55e" opacity="0.5"></circle>
+  <circle cx="448" cy="256" r="8" fill="#22d3ee" opacity="0.4"></circle>
+  <circle cx="256" cy="448" r="10" fill="#22c55e" opacity="0.4"></circle>
+  <circle cx="64" cy="256" r="8" fill="#22d3ee" opacity="0.35"></circle>
+
+</svg>

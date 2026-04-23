@@ -10,7 +10,20 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // Serve static files from public directory
+app.use(
+  express.static("public", {
+    maxAge: "1h",
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, path) => {
+      if (path.endsWith(".html")) {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+      }
+    },
+  }),
+); // Serve static files from public directory
 
 // Utility functions
 function parseCSV(csvText) {
@@ -275,8 +288,12 @@ app.get("/api/events", async (req, res) => {
   try {
     const hours = parseInt(req.query.hours) || 24;
     const limit = parseInt(req.query.limit) || 50;
+    const deviceId = req.query.device_id || null;
 
-    const events = await readCSVFile("events.csv");
+    let events = await readCSVFile("events.csv");
+    if (deviceId) {
+      events = events.filter((e) => e.device_id === deviceId);
+    }
     const recentEvents = getRecentData(events, hours)
       .filter((row) => row.event_type === "disconnect")
       .slice(-limit)
@@ -285,6 +302,7 @@ app.get("/api/events", async (req, res) => {
         event_type: row.event_type,
         duration_seconds: parseFloat(row.duration_seconds),
         details: row.details,
+        device_id: row.device_id || "server",
       }))
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
@@ -299,6 +317,233 @@ app.get("/api/events", async (req, res) => {
       status: "error",
       message: error.message,
     });
+  }
+});
+
+// Device management endpoints
+
+async function loadAuthConfig() {
+  try {
+    const data = await fs.readFile(
+      path.join(__dirname, "config", "auth.json"),
+      "utf8",
+    );
+    return JSON.parse(data);
+  } catch (error) {
+    return { enabled: false, tokens: {} };
+  }
+}
+
+async function saveAuthConfig(config) {
+  await fs.writeFile(
+    path.join(__dirname, "config", "auth.json"),
+    JSON.stringify(config, null, 2),
+  );
+}
+
+app.post("/api/devices", async (req, res) => {
+  try {
+    const data = req.body;
+    const deviceId =
+      "dev_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+
+    const config = await loadAuthConfig();
+    config.tokens[deviceId] = {
+      id: deviceId,
+      name: data.name || "Unknown Device",
+      type: data.type || "unknown",
+      location: data.location || "",
+      created: new Date().toISOString(),
+    };
+    await saveAuthConfig(config);
+
+    const deviceDir = path.join(__dirname, "data", "devices", deviceId);
+    await fs.mkdir(deviceDir, { recursive: true });
+
+    await fs.writeFile(
+      path.join(deviceDir, "connectivity.csv"),
+      "timestamp,status,target,response_time_ms,method,device_id\n",
+    );
+    await fs.writeFile(
+      path.join(deviceDir, "speedtest.csv"),
+      "timestamp,download_mbps,upload_mbps,ping_ms,server,status,device_id\n",
+    );
+    await fs.writeFile(
+      path.join(deviceDir, "events.csv"),
+      "timestamp,event_type,duration_seconds,details,device_id\n",
+    );
+
+    res.json({
+      status: "success",
+      device_id: deviceId,
+      token: deviceId,
+      device: config.tokens[deviceId],
+    });
+  } catch (error) {
+    console.error("Error in /api/devices POST:", error);
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+app.get("/api/devices", async (req, res) => {
+  try {
+    const config = await loadAuthConfig();
+    const devices = Object.values(config.tokens);
+    res.json({ status: "success", data: devices });
+  } catch (error) {
+    console.error("Error in /api/devices GET:", error);
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+app.post("/api/device/:deviceId/test", async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", async () => {
+      try {
+        const data = JSON.parse(body);
+        const deviceDir = path.join(__dirname, "data", "devices", deviceId);
+
+        if (data.connectivity) {
+          const connFile = path.join(deviceDir, "connectivity.csv");
+          const connLine =
+            data.timestamp +
+            "," +
+            data.connectivity.status +
+            "," +
+            data.connectivity.target +
+            "," +
+            data.connectivity.response_time_ms +
+            "," +
+            data.connectivity.method +
+            "," +
+            deviceId +
+            "\n";
+          await fs.appendFile(connFile, connLine);
+        }
+
+        if (data.speedtest) {
+          const speedFile = path.join(deviceDir, "speedtest.csv");
+          const speedLine =
+            data.timestamp +
+            "," +
+            data.speedtest.download_mbps +
+            "," +
+            data.speedtest.upload_mbps +
+            "," +
+            data.speedtest.ping_ms +
+            "," +
+            data.speedtest.server +
+            "," +
+            data.speedtest.status +
+            "," +
+            deviceId +
+            "\n";
+          await fs.appendFile(speedFile, speedLine);
+        }
+
+        if (data.event) {
+          const eventFile = path.join(deviceDir, "events.csv");
+          const eventLine =
+            data.event.timestamp +
+            "," +
+            data.event.event_type +
+            "," +
+            data.event.duration_seconds +
+            "," +
+            data.event.details +
+            "," +
+            deviceId +
+            "\n";
+          await fs.appendFile(eventFile, eventLine);
+        }
+
+        res.json({ status: "success" });
+      } catch (error) {
+        console.error("Error saving test results:", error);
+        res.status(500).json({ status: "error", message: error.message });
+      }
+    });
+  } catch (error) {
+    console.error("Error in /api/device/:deviceId/test:", error);
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+app.get("/api/device/:deviceId/data", async (req, res) => {
+  try {
+    const { deviceId } = req.params;
+    const hours = parseInt(req.query.hours) || 24;
+
+    const connectivity = await readCSVFile(
+      path.join("data", "devices", deviceId, "connectivity.csv"),
+    );
+    const speedtest = await readCSVFile(
+      path.join("data", "devices", deviceId, "speedtest.csv"),
+    );
+    const events = await readCSVFile(
+      path.join("data", "devices", deviceId, "events.csv"),
+    );
+
+    const recentConnectivity = getRecentData(connectivity, hours);
+    const recentSpeedtest = getRecentData(speedtest, hours);
+    const recentEvents = getRecentData(events, hours);
+
+    res.json({
+      status: "success",
+      data: {
+        connectivity: recentConnectivity,
+        speedtest: recentSpeedtest,
+        events: recentEvents,
+      },
+    });
+  } catch (error) {
+    console.error("Error in /api/device/:deviceId/data:", error);
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+app.get("/api/compare", async (req, res) => {
+  try {
+    const hours = parseInt(req.query.hours) || 24;
+    const config = await loadAuthConfig();
+    const deviceIds = Object.keys(config.tokens);
+
+    const comparisons = [];
+    for (const deviceId of deviceIds) {
+      try {
+        const connectivity = await readCSVFile(
+          path.join("data", "devices", deviceId, "connectivity.csv"),
+        );
+        const recentConnectivity = getRecentData(connectivity, hours);
+
+        const successful = recentConnectivity.filter(
+          (r) => r.status === "connected",
+        ).length;
+        const total = recentConnectivity.length;
+        const uptime = total > 0 ? (successful / total) * 100 : 0;
+
+        comparisons.push({
+          device_id: deviceId,
+          device_name: config.tokens[deviceId].name,
+          device_type: config.tokens[deviceId].type,
+          total_tests: total,
+          successful_tests: successful,
+          uptime_percentage: uptime,
+        });
+      } catch (error) {
+        console.error("Error processing device " + deviceId + ":", error);
+      }
+    }
+
+    res.json({ status: "success", data: comparisons });
+  } catch (error) {
+    console.error("Error in /api/compare:", error);
+    res.status(500).json({ status: "error", message: error.message });
   }
 });
 
@@ -384,6 +629,21 @@ app.get("/api/health", (req, res) => {
 // Serve the main dashboard
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Serve device monitor page
+app.get("/monitor", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "monitor.html"));
+});
+
+// Serve devices list page
+app.get("/devices", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "devices.html"));
+});
+
+// Serve compare page
+app.get("/compare", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "compare.html"));
 });
 
 // Error handling middleware

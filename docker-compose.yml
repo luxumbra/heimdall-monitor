@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   internet-monitor:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     ports:
@@ -11,39 +9,39 @@ services:
       # Node.js Configuration
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=${PORT:-3000}
-      
+
       # Monitor Configuration
       - PING_INTERVAL=${PING_INTERVAL:-30}
       - SPEEDTEST_INTERVAL=${SPEEDTEST_INTERVAL:-3600}
       - UPLOAD_INTERVAL=${UPLOAD_INTERVAL:-300}
       - LOCATION_NAME=${LOCATION_NAME:-Home Connection Monitor}
-      
+
       # Timezone (optional)
       - TZ=${TZ:-UTC}
-    
+
     volumes:
+      # Bind mount for device data (multi-device monitoring)
+      # Bind mount for local logs (so container can see your local monitor data)
+      - ./internet_logs:/app/internet_logs
+      - ./data:/app/data
       # Persistent storage for logs and data
-      - internet_logs_data:/app/internet_logs
-    
+
     restart: unless-stopped
-    
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
-    
+
     # Resource limits
     deploy:
       resources:
         limits:
           memory: 512M
-          cpus: '0.5'
+          cpus: "0.5"
         reservations:
           memory: 256M
-          cpus: '0.25'
+          cpus: "0.25"
 
-volumes:
-  internet_logs_data:
-    driver: local

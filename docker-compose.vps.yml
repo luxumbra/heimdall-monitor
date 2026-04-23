@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   internet-monitor-dashboard:
     build:
@@ -36,9 +34,9 @@ services:
       resources:
         limits:
           memory: 256M
-          cpus: '0.3'
+          cpus: "0.3"
         reservations:
           memory: 128M
-          cpus: '0.1'
+          cpus: "0.1"
 
 # No named volumes needed - using bind mounts

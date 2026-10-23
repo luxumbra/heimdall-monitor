@@ -1,5 +1,5 @@
 # Multi-stage build for Internet Monitor with Python + Node.js
-FROM node:22-bookworm-slim
+FROM node:22.23.4-bookworm-slim
 
 # Avoid prompts from apt
 ENV DEBIAN_FRONTEND=noninteractive
